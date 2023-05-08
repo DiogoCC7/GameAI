@@ -56,40 +56,40 @@ class MinimaxPlayer(BarcaPlayer):
 
         # return 20 * num_pieces_to_be_taken
 
-        agent_goals = state.get_player_goals(self.get_current_pos())
+        # agent_goals = state.get_player_goals(self.get_current_pos())
 
-        # Get the opponent's goals
-        opponent_goals = state.get_player_goals(self.get_opponent())
+        # # Get the opponent's goals
+        # opponent_goals = state.get_player_goals(self.get_opponent())
 
-        # Calculate the difference between the number of agent goals and opponent goals
-        goal_difference = len(agent_goals) - len(opponent_goals)
+        # # Calculate the difference between the number of agent goals and opponent goals
+        # goal_difference = len(agent_goals) - len(opponent_goals)
 
-        # If the agent has achieved all its goals, it wins
-        if len(agent_goals) == 3:
-            return float('inf')
+        # # If the agent has achieved all its goals, it wins
+        # if len(agent_goals) == 3:
+        #     return float('inf')
 
-        # If the agent has no goals left, it loses
-        if len(agent_goals) == 0:
-            return float('-inf')
+        # # If the agent has no goals left, it loses
+        # if len(agent_goals) == 0:
+        #     return float('-inf')
 
-        # Calculate the distance to the closest agent goal
-        min_agent_goal_distance = float('inf')
-        for goal in agent_goals:
-            distance = self.euclidean_distance(pos_x, pos_y, goal.x, goal.y)
-            if distance < min_agent_goal_distance:
-                min_agent_goal_distance = distance
+        # # Calculate the distance to the closest agent goal
+        # min_agent_goal_distance = float('inf')
+        # for goal in agent_goals:
+        #     distance = self.euclidean_distance(pos_x, pos_y, goal.x, goal.y)
+        #     if distance < min_agent_goal_distance:
+        #         min_agent_goal_distance = distance
 
-        # Calculate the distance to the closest opponent goal
-        min_opponent_goal_distance = float('inf')
-        for goal in opponent_goals:
-            distance = self.euclidean_distance(pos_x, pos_y, goal.x, goal.y)
-            if distance < min_opponent_goal_distance:
-                min_opponent_goal_distance = distance
+        # # Calculate the distance to the closest opponent goal
+        # min_opponent_goal_distance = float('inf')
+        # for goal in opponent_goals:
+        #     distance = self.euclidean_distance(pos_x, pos_y, goal.x, goal.y)
+        #     if distance < min_opponent_goal_distance:
+        #         min_opponent_goal_distance = distance
 
-        # Calculate the outcome based on the goal difference and the distance to the goals
-        outcome = (1000 * goal_difference) - (10 * min_agent_goal_distance) + (5 * min_opponent_goal_distance)
+        # # Calculate the outcome based on the goal difference and the distance to the goals
+        # outcome = (1000 * goal_difference) - (10 * min_agent_goal_distance) + (5 * min_opponent_goal_distance)
 
-        return outcome
+        # return outcome
 
         # Achive 3
         minimax_goals = state.get_player_goals(self.get_current_pos())
@@ -149,7 +149,7 @@ class MinimaxPlayer(BarcaPlayer):
             # 'fear_score': .2
         }
 
-        return weights
+        return weights                              
 
     def minimax(
             self,

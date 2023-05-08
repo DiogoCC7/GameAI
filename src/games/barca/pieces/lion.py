@@ -14,11 +14,9 @@ class Lion(Piece):
         return Lion(self.x, self.y, self.is_alternative)
 
     def is_valid_play(self, play_x: int, play_y: int):
-
         """
         Moves only diagonally
         """
-
         diff_x = abs(play_x - self.x)
         diff_y = abs(play_y - self.y)
         return (diff_x == diff_y)
