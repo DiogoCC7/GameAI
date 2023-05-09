@@ -15,7 +15,9 @@ class Mouse(Piece):
         return self.is_alternative != piece.is_alternative and piece.display_value == 'L'
 
     def copy(self):
-        return Mouse(self.x, self.y, self.is_alternative)
+        piece = Mouse(self.x, self.y, self.is_alternative)
+        piece.is_must_play = self.is_must_play
+        return piece
 
     def is_valid_play(self, play_x: int, play_y: int):
         """

@@ -148,20 +148,34 @@ class BarcaState(State):
     def get_player_pieces(self, acting_player: int) -> list[Piece]:
         red, green, _ = self.__get_all_playable_pieces()
 
+        # for player_red in self.get_player_goals(1):
+        #     red.append(player_red)
+
+        # for player_green in self.get_player_goals(0):
+        #     green.append(player_green)
+
         return {
             1: red,
             0: green
         }[acting_player]
     
     def get_player_not_in_goal(self) -> list[Piece]:
-        new_pieces = []
+        
+        player_pieces = self.get_player_pieces(self.__acting_player)
 
         for goal in self.get_player_goals(self.__acting_player):
-            for piece in self.get_player_pieces(self.__acting_player):
-                if goal.content.x != piece.x and goal.content.y != piece.y:
-                    new_pieces.append(piece)
+            player_pieces.remove(goal.content)
 
-        return new_pieces
+        return player_pieces
+        
+        # new_pieces = self.get_player_pieces(self.__acting_player)
+
+        # for goal in self.get_goals():
+        #     if goal.has_piece() and goal.content.is_alternative and self.__acting_player == 1 and goal.has_piece() and not goal.content.is_alternative and self.__acting_player == 0:
+        #         new_pieces.pop(goal.content)
+
+        # return new_pieces
+
 
     def get_player_goals(self, player: int):
         return [goal for goal in self.get_goals() if goal.has_piece() and self.check_piece_player(goal.content, player)]
@@ -174,68 +188,38 @@ class BarcaState(State):
 
     def get_num_players(self):
         return 2
-    
-    # def __verify_fear_pieces(self) -> list[list[Piece]]:
-
-    #     """
-    #     Verify in board what are the pieces that are with fear
-    #     """
-
-    #     # Array of an Array of each piece that is afraid of each player, 0, 1
-    #     lista = [[], []]
-
-    #     for i, row in enumerate(self.__grid):
-    #         for j, _ in enumerate(row):
-
-    #             current_piece: Piece = self.get_piece(i, j)
-
-    #             if not isinstance(current_piece, BasePiece):
-    #                 continue
-
-    #             if isinstance(current_piece, Goal):
-    #                 if current_piece.has_piece():
-    #                     current_piece = current_piece.content
-    #                 else:
-    #                     continue
-
-    #             current_piece.is_must_play = False
-
-    #             for adj_piece in self.get_adjacent_pieces(current_piece.x, current_piece.y):
-    #                 if current_piece.validate_adj(adj_piece):
-    #                     current_piece.is_must_play = True
-    #                     lista[1 if current_piece.is_alternative else 0].append(current_piece)
-
-    #     return lista
-    
-    def __verify_fear_pieces(self) -> list[list[Piece]]:
         
-        player_pieces = self.get_player_pieces(self.get_acting_player())
+    def __verify_fear_pieces(self):
 
-        for piece in player_pieces:
-            piece.is_must_play = False
-            
-            for adj in self.get_adjacent_pieces(piece.x, piece.y):
-                if piece.validate_adj(adj):
-                    piece.is_must_play = True
-                    break
-        
-        return player_pieces
+        opponent_pieces = self.get_player_pieces(0 if self.__acting_player == 1 else 1)
+        player_pieces = self.get_player_pieces(self.__acting_player)
 
-    def __get_must_play_pieces(self):
+        for opponent in opponent_pieces:
+            player_pieces.append(opponent)
 
-        must_play_pieces = [[], []]
+        for player in player_pieces:
 
-        pieces = self.__verify_fear_pieces()
-        
-        for piece in pieces:
-            if len(self.get_possible_actions(piece.x, piece.y)) > 0:
-                must_play_pieces[1 if piece.is_alternative else 0].append(piece)
+            player = self.get_piece(player.x, player.y)
+                
+            if not isinstance(player, BasePiece):
+                continue
 
-        return must_play_pieces
-    
+            if isinstance(player, Goal) and player.has_piece():
+                player = player.content
+
+            self.get_piece(player.x, player.y).is_must_play = False
+
+            for adj in self.get_adjacent_pieces(player.x, player.y):
+
+                if self.get_piece(player.x, player.y).validate_adj(adj):
+                    self.get_piece(player.x, player.y).is_must_play = True
+
+    def get_must_play_pieces(self):
+        return [piece for piece in self.get_player_pieces(self.__acting_player) if piece.is_must_play]
+
     def get_my_must_play_pieces(self) -> int:
-        # print(self.__get_must_play_pieces()[self.__acting_player])
-        return len(self.__get_must_play_pieces()[self.__acting_player])
+        # print(len(self.get_must_play_pieces()))
+        return len(self.get_must_play_pieces())
     
     def play_must_play_piece(self, piece: BasePiece) -> bool:
         
@@ -249,43 +233,50 @@ class BarcaState(State):
         if len(self.get_possible_actions(piece.x, piece.y)) == 0:
             return True
 
-        if not piece in self.__get_must_play_pieces()[self.__acting_player]:
+        if not piece in self.get_must_play_pieces():
             return False
         
-        piece.is_must_play = False
-
         return True
     
+            # for i in range(4):
+        #     nx, ny = x + dx[i], y + dy[i] # nova posição (nx, ny)
+            
+        #     # verifica se a nova posição está dentro dos limites do tabuleiro
+        #     if nx < 0 or ny < 0 or nx >= self.__size or ny >= self.__size:
+        #         continue
+            
+
     def get_adjacent_pieces(self, x: int, y: int) -> list[Piece]:
 
-        # Adjacent pieces
-        adj_pieces = []
+        adj_pieces = [] # lista de peças adjacentes
 
-        combinations = list(itertools.product([-1, 0, 1], repeat=2))
-        combinations = [c for c in combinations if c != (0, 0)]
+        dx = [-1, 0, 1] # variação em x para as células vizinhas
+        dy = [-1, 0, 1] # variação em y para as células vizinhas
+        
+        for _x in dx:
+            for _y in dy:
 
-        for c in combinations:
+                if (_x == 0 and _y == 0) or (_x < 0 or _y < 0 or _x >= self.__size or _y >= self.__size):
+                    continue
 
-            # Verifies if is possible to play in this cell
-            ex_x = x + c[0]
-            ex_y = y + c[1]
+                pos_x = x - _x
+                pos_y = y - _y
 
-            if ex_x > self.__size - 1 \
-                    or ex_y > self.__size - 1 \
-                    or ex_x < 1 \
-                    or ex_y < 1:
-                continue
+                # print(f'Posx: {pos_x}|Posy: {pos_y}')
 
-            piece = self.__grid[ex_x][ex_y]
+                # obtém a peça na nova posição
+                piece = self.__grid[pos_x][pos_y]
+                
+                # se a célula contém uma peça, adiciona à lista de peças adjacentes
+                if isinstance(piece, Piece):
+                    adj_pieces.append(piece)
 
-
-            if isinstance(piece, Piece):
-                adj_pieces.append(piece)
-            elif isinstance(piece, Goal) and piece.has_piece():
-                adj_pieces.append(piece.content)
-
+                # se a célula contém um objetivo com peça, adiciona a peça à lista de peças adjacentes
+                elif isinstance(piece, Goal) and piece.has_piece():
+                    adj_pieces.append(piece.content)
+        
         return adj_pieces
-    
+
     def check_piece_player(self, piece: Piece, player: int):
         
         if not isinstance(piece, BasePiece):
@@ -364,15 +355,17 @@ class BarcaState(State):
 
     def update(self, action: BarcaAction):
 
-        if isinstance(self.get_piece(action.pos_x, action.pos_y), Piece) and self.get_piece(action.pos_x, action.pos_y).display_value == 'E':
-            # print(f"{self.get_piece(action.pos_x, action.pos_y)}")
-            for i in self.get_adjacent_pieces(action.pos_x, action.pos_y):
-                if i.display_value == 'M' and i.is_alternative != self.get_piece(action.pos_x, action.pos_y).is_alternative:
-                    print(f"{self.get_piece(action.pos_x, action.pos_y)}|Pos X:{action.pos_x} Y:{action.pos_y}|ADJ: {i}|Must Play: {self.get_piece(action.pos_x, action.pos_y).is_must_play}")
+        # if isinstance(self.get_piece(action.pos_x, action.pos_y), Piece) and self.get_piece(action.pos_x, action.pos_y).display_value == 'E':
+        #     # print(f"{self.get_piece(action.pos_x, action.pos_y)}")
+        #     for i in self.get_adjacent_pieces(action.pos_x, action.pos_y):
+        #         if i.display_value == 'M' and i.is_alternative != self.get_piece(action.pos_x, action.pos_y).is_alternative:
+        #             print(f"{self.get_piece(action.pos_x, action.pos_y)}|Pos X:{action.pos_x} Y:{action.pos_y}|ADJ: {i}|Must Play: {self.get_piece(action.pos_x, action.pos_y).is_must_play}")
 
         # move piece
         self.__move_piece(action)
         
+        # print(f"Ver: {self.get_adjacent_pieces(action.move_to_x, action.move_to_y)}")
+
         # for i, row in enumerate(self.__grid):
         #     for j, _ in enumerate(row):
         #         if isinstance(self.__grid[i][j], BasePiece):
@@ -386,49 +379,116 @@ class BarcaState(State):
 
         self.__turns_count += 1
 
+        self.__verify_fear_pieces()
+
     def __move_piece(self, action: BarcaAction):
 
-        # Goal to Normal
-        if isinstance(self.get_piece(action.pos_x, action.pos_y), Goal):
-            
-            # Goal to Goal
-            if isinstance(self.get_piece(action.move_to_x, action.move_to_y), Goal):
-                before_goal_piece: Goal = self.get_piece(action.pos_x, action.pos_y)
-                move_goal_piece: Goal = self.get_piece(action.move_to_x, action.move_to_y)
+        # print(f"Before Piece: {self.get_piece(action.pos_x, action.pos_y)}|Pos_x: {action.pos_x}|Pos_y: {action.pos_y}")  
 
-                move_goal_piece.content = before_goal_piece.content.copy()
-                move_goal_piece.content.move(action.move_to_x, action.move_to_y)
-                before_goal_piece.clear_piece()
-                return
+        precedent_piece: BasePiece = self.get_piece(action.pos_x, action.pos_y)
+        is_precedent_goal = isinstance(precedent_piece, Goal)
+        destination_piece: BasePiece = self.get_piece(action.move_to_x, action.move_to_y)
+        is_destination_goal = isinstance(destination_piece, Goal)
 
-            goal_piece: BasePiece = self.get_piece(action.pos_x, action.pos_y)
-            self.set_piece(action.move_to_x, action.move_to_y, goal_piece.content.copy())
-
-            goal_piece.content.move(action.move_to_x, action.move_to_y)
-            goal_piece.clear_piece()
-            return
-
-        # Move to Goal
-        if isinstance(self.get_piece(action.move_to_x, action.move_to_y), Goal):
-            
-            before_piece: BasePiece = self.get_piece(action.pos_x, action.pos_y)
-            goal_piece: Goal = self.get_piece(action.move_to_x, action.move_to_y)
-            goal_piece.content = before_piece.copy()
-            goal_piece.content.move(action.move_to_x, action.move_to_y)
-
-            # Sets last location to -1
-            self.set_piece(action.pos_x, action.pos_y, BarcaState.EMPTY_CELL)
-            return
+        #se for goal, temos que fazer algumas coisas com o gol, e depois com o conteudo
         
-        # Sets Moves the New Piece
-        before_piece: BasePiece = self.get_piece(action.pos_x, action.pos_y)
-        new_piece: BasePiece = before_piece.copy()
-        new_piece.move(action.move_to_x, action.move_to_y)
-        self.set_piece(action.move_to_x, action.move_to_y, new_piece)
+        #mover
+        if is_precedent_goal:
+            precedent_piece.content.move(action.move_to_x, action.move_to_y)
+        else:
+            precedent_piece.move(action.move_to_x, action.move_to_y)
 
-        # Sets last location to -1
-        self.set_piece(action.pos_x, action.pos_y, BarcaState.EMPTY_CELL)
-        return
+        if is_precedent_goal:
+
+            # definir caso o destino for golo, então o content deste golo = ao content do golo destino
+            if is_destination_goal:
+                destination_piece.content = precedent_piece.content.copy()
+            else:
+                # caso contrarior, limpa-se o content e defini-se a celula vazia com o content do golo
+                self.set_piece(action.move_to_x, action.move_to_y, precedent_piece.content.copy())
+
+            precedent_piece.clear_piece()
+
+        else:
+            # Limpar a celula
+            self.set_piece(action.pos_x, action.pos_y, BarcaState.EMPTY_CELL)
+
+            if is_destination_goal:
+                destination_piece.content = precedent_piece.copy()
+            else:
+                self.set_piece(action.move_to_x, action.move_to_y, precedent_piece.copy())
+        
+        # print(f"After Piece: {self.get_piece(action.pos_x, action.pos_y)}|Pos_x: {action.pos_x}|Pos_y: {action.pos_y}")
+
+        # if is_destination_goal:
+        #     destination_piece.content = precedent_piece
+        # else:
+        #     self.set_piece(action.move_to_x, action.move_to_y, precedent_piece)
+
+        #se era gol, eu preciso limpar o precedente e mover a peça
+        #se vai ser gol, eu preciso definir o content ao inve's de simplesmente mover
+
+        # if isinstance(self.get_piece(action.pos_x, action.pos_y), Goal):
+        #     move_piece = move_piece.content
+        
+        # #I'm sure move_piece is a piece even if it's in a goal
+
+        # destination_piece: BasePiece = self.get_piece(new_pos_x, new_pos_y)
+        # if isinstance(destination_piece, Goal):
+        #     #limpar o gol anterior
+        #     #
+        #     move_piece = move_piece.content
+
+
+        # if isinstance(self.get_piece(new_pos_x, new_pos_y), Goal):
+        #     move_piece.move(new_pos_x, new_pos_y)
+        #     self.get_piece(new_pos_x, new_pos_y).content = move_piece.copy()
+
+        # move_piece.move(new_pos_x, new_pos_y)
+
+        
+
+        # # Goal to Normal
+        # if isinstance(self.get_piece(action.pos_x, action.pos_y), Goal):
+            
+        #     # Goal to Goal
+        #     if isinstance(self.get_piece(action.move_to_x, action.move_to_y), Goal):
+        #         before_goal_piece: Goal = self.get_piece(action.pos_x, action.pos_y)
+        #         move_goal_piece: Goal = self.get_piece(action.move_to_x, action.move_to_y)
+
+        #         before_goal_piece.content.move(action.move_to_x, action.move_to_y)
+        #         move_goal_piece.content = before_goal_piece.content.copy()
+        #         before_goal_piece.clear_piece()
+        #         return
+
+        #     goal_piece: BasePiece = self.get_piece(action.pos_x, action.pos_y)
+        #     goal_piece.content.move(action.move_to_x, action.move_to_y)
+        #     self.set_piece(action.move_to_x, action.move_to_y, goal_piece.content.copy())
+        #     goal_piece.clear_piece()
+        #     return
+
+        # # Move to Goal
+        # if isinstance(self.get_piece(action.move_to_x, action.move_to_y), Goal):
+            
+        #     before_piece: BasePiece = self.get_piece(action.pos_x, action.pos_y)
+        #     goal_piece: Goal = self.get_piece(action.move_to_x, action.move_to_y)
+            
+        #     before_piece.move(action.move_to_x, action.move_to_y)
+        #     goal_piece.content = before_piece.copy()
+
+        #     # Sets last location to -1
+        #     self.set_piece(action.pos_x, action.pos_y, BarcaState.EMPTY_CELL)
+        #     return
+        
+        # # Sets Moves the New Piece
+        # before_piece: BasePiece = self.get_piece(action.pos_x, action.pos_y)
+        # new_piece: BasePiece = before_piece.copy()
+        # new_piece.move(action.move_to_x, action.move_to_y)
+        # self.set_piece(action.move_to_x, action.move_to_y, new_piece)
+
+        # # Sets last location to -1
+        # self.set_piece(action.pos_x, action.pos_y, BarcaState.EMPTY_CELL)
+        # return
 
 
     # Display Cell Content
@@ -462,6 +522,13 @@ class BarcaState(State):
 
     # Print Board
     def display(self):
+
+        for goal in self.get_goals():
+            print(f"Goal: {goal}|Pos_x: {goal.x}|Pos_y: {goal.y}")
+
+        for piece in self.get_player_pieces(self.__acting_player):
+            print(f"Piece: {piece}|Pos_x: {piece.x}|Pos_y: {piece.y}")
+
         self.__display_numbers()
         self.__display_separator()
 
@@ -535,7 +602,7 @@ class BarcaState(State):
         pieces_to_play = self.get_player_pieces(self.get_acting_player())
         all_possible_actions = []
 
-        my_must_pieces = self.__get_must_play_pieces()[self.__acting_player]
+        my_must_pieces = self.get_must_play_pieces()
         # print(f"MustPiece: {my_must_pieces}")
 
         if len(my_must_pieces) > 0:
@@ -544,10 +611,9 @@ class BarcaState(State):
         # iterar por todas as peças
         for piece in pieces_to_play:
             
-            # não mexer pexa caso esta estaja numa poça de água
-            if isinstance(self.get_piece(piece.x, piece.y), Goal) and not self.get_piece(piece.x, piece.y).content.is_must_play:
-                count += 1
-                continue
+            # # não mexer pexa caso esta esteja numa poça de água
+            # if isinstance(self.get_piece(piece.x, piece.y), Goal) and not self.get_piece(piece.x, piece.y).content.is_must_play:
+            #     continue
 
             # para cada peça vamos definir todos os possiveis movimentos dela
             for action in self.get_possible_actions(piece.x, piece.y):

@@ -13,6 +13,8 @@ class HumanPlayer(BarcaPlayer):
 
     def get_action(self, state: BarcaState):
         
+        state.get_adjacent_pieces(9, 9)
+
         # Check if the player has must play pieces
         human_must_play = state.get_my_must_play_pieces()
         state.display()
@@ -71,7 +73,7 @@ class HumanPlayer(BarcaPlayer):
  
                 if len(play_to) == 0:
                     raise Exception()
-
+                
                 return BarcaAction(
                     characterToInt(play_piece[0]),
                     int(play_piece[1:]) - 1,

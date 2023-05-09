@@ -11,7 +11,9 @@ class Lion(Piece):
         return self.is_alternative != piece.is_alternative and piece.display_value == 'E'
 
     def copy(self):
-        return Lion(self.x, self.y, self.is_alternative)
+        piece = Lion(self.x, self.y, self.is_alternative)
+        piece.is_must_play = self.is_must_play
+        return piece
 
     def is_valid_play(self, play_x: int, play_y: int):
         """

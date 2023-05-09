@@ -28,19 +28,33 @@ class MinimaxBarcaPlayerOther(BarcaPlayer):
         if player_in_goals > 0:
             heuristic_result = player_in_goals * 20
 
+        # Quão mais perto fica do golo
+        # for piece in state.get_player_not_in_goal():
+
         # Caso os golos estejam completos
         for piece in state.get_player_not_in_goal():
             for goal_piece in state.get_goals():
-                if goal_piece.has_piece() and piece.is_valid_play(goal_piece.x, goal_piece.y) and piece.validate_adj(goal_piece.content) and state.dont_jump_piece(piece.x, piece.y, goal_piece.x, goal_piece.y):
-                    heuristic_result += 2
+                #Gol está completo com uma peça oponente
+                #a peça no gol é temida pela minha peça
+                #a minha peça consegue fazer uma jogada para ser um adj da peça
+
+                adj_pieces_in_goal = state.get_adjacent_pieces(goal_piece.x, goal_piece.y)
+                is_adj_movable = False
+                for adj in adj_pieces_in_goal:
+                    if piece.is_valid_play(adj.x, adj.y):
+                        is_adj_movable = True
+                        break
+
+                if goal_piece.has_piece() and not state.check_piece_player(goal_piece.content, self.get_current_pos()) and is_adj_movable and goal_piece.content.validate_adj(piece): # and state.dont_jump_piece(piece.x, piece.y, goal_piece.x, goal_piece.y)
+                    heuristic_result += 5
 
         for piece in state.get_player_not_in_goal():
             for goal in state.get_goals():
                 if piece.is_valid_play(goal.x, goal.y) and not goal.has_piece() and state.dont_jump_piece(piece.x, piece.y, goal_piece.x, goal_piece.y):
                     heuristic_result += 10
 
-        if self.get_current_pos() != state.get_acting_player():
-            heuristic_result = heuristic_result * -1
+        # if self.get_current_pos() != state.get_acting_player():
+        #     heuristic_result = heuristic_result * -1
 
         return heuristic_result
 
@@ -116,4 +130,5 @@ class MinimaxBarcaPlayerOther(BarcaPlayer):
 
     def event_end_game(self, final_state: State):
         # ignore
+        final_state.display()
         pass

@@ -11,7 +11,9 @@ class Elephant(Piece):
         return self.is_alternative != piece.is_alternative and piece.display_value == 'M'
 
     def copy(self):
-        return Elephant(self.x, self.y, self.is_alternative)
+        piece = Elephant(self.x, self.y, self.is_alternative)
+        piece.is_must_play = self.is_must_play
+        return piece
 
     def is_valid_play(self, play_x: int, play_y: int):
         """

@@ -18,7 +18,6 @@ class Piece(BasePiece, ABC):
         self.__is_must_play = False
         self.display_value = ''
 
-
     @property
     def is_alternative(self):
         """
@@ -32,6 +31,9 @@ class Piece(BasePiece, ABC):
         If this piece is an dangerous situation, meaning is scared of other pieces this piece is marked has 'Must Play'
         """
         return self.__is_must_play
+    
+    def set_must_play(self, value: bool):
+        self.__is_must_play = value
 
     @is_must_play.setter
     def is_must_play(self, value: bool):
@@ -52,6 +54,7 @@ class Piece(BasePiece, ABC):
         pass
 
     def __str__(self) -> str:
+
         return printColor(self.display_value, display_color=DisplayColor.PURPLE) \
             if self.is_must_play else printColor(self.display_value, display_color=DisplayColor.PINK) \
             if self.is_selected else printColor(self.display_value, display_color=DisplayColor.GREEN) \
